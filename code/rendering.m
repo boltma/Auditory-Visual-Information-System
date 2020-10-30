@@ -26,7 +26,8 @@ for ind = 1:168*168
 end
 
 for ii = 1:10
-    imgs(:,:,ii) = uint8(reshape(b' * t(:, ii), 168, 168));
+    % imgs(:,:,ii) = uint8(reshape(b' * t(:, ii), 168, 168));
+    imgs(:,:,ii) = uint8(reshape(TSmodel(b, t(:, ii), 0, 0, eye(3)), 168, 168));
 end
 
 end
