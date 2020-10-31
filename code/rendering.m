@@ -17,6 +17,10 @@ Test = load([pth, '/test.txt']);
 s = angleConversion(Source);
 t = angleConversion(Test);
 
+th_l = 2;
+th_h = 254;
+m(m < th_l | m > th_h) = NaN;
+
 b = s'\m';
 
 % len = numel(b);
@@ -25,7 +29,7 @@ b = s'\m';
 % options = optimset('Display','iter','MaxIter', 1,'Algorithm','quasi-newton');
 % x = fminunc(TSfunc, x0, options);
 
-k = zeros(1, 168*168);
+k = zeros(168, 168);
 z = zeros(3, 168*168);
 for ind = 1:168*168
     k(ind) = norm(b(:, ind));
@@ -33,17 +37,25 @@ for ind = 1:168*168
     z(:, ind) = -z(:, ind) / z(3, ind);
 end
 
-depth = normalToDepth(reshape(z(1,:), 168, 168), reshape(z(2,:), 168, 168));
+zx = reshape(z(1,:), 168, 168);
+zy = reshape(z(2,:), 168, 168);
+zx = inpaint_nans(zx);
+zy = inpaint_nans(zy);
+k = reshape(inpaint_nans(k), 1, []);
 
-[bx, by, bz] = surfnorm(depth);
-b = [reshape(bx, 1, []); reshape(by, 1, []); reshape(bz, 1, [])] .* k;
+depth = normalToDepth(zx, zy);
+z = depth;
+
+[zx_new, zy_new] = partial(depth);
+b_new = [reshape(zx_new, 1, []); reshape(zy_new, 1, []); -ones(1, 168*168)];
+b_new = -b_new ./ vecnorm(b_new) .* k;
 
 % b = reshape(x(1:len), 3, []);
 % as = x(len+1);
 % nu = x(len+2);
 % g = reshape(x(end-8:end), 3, 3);
 for ii = 1:10
-    imgs(:,:,ii) = uint8(reshape(b' * t(:, ii), 168, 168));
+    imgs(:,:,ii) = uint8(reshape(b_new' * t(:, ii), 168, 168));
     % imgs(:,:,ii) = uint8(reshape(TSmodel(b, t(:, ii), as, nu, g), 168, 168));
 end
 
