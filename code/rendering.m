@@ -17,8 +17,8 @@ Test = load([pth, '/test.txt']);
 s = angleConversion(Source);
 t = angleConversion(Test);
 
-th_l = 2;
-th_h = 254;
+th_l = 5;
+th_h = 255;
 m(m < th_l | m > th_h) = NaN;
 
 b = s'\m';
