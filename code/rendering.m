@@ -1,9 +1,5 @@
 function [z,imgs] = rendering(pth)
-%RENDERING �˴���ʾ�йش˺�����ժҪ
-%   �˴���ʾ��ϸ˵��
-%   z�ĳ߶���x��y��ͬ����С��ͬ�ڲ���ͼ���С��λ�������ͼ�����ص�һһ��Ӧ
-%   imgsΪ��Ⱦ�������С��ͬ�ڲ���ͼ���С��λ�������ͼ�����ص�һһ���?
-z=zeros(168,168);
+% rendering function
 imgs=zeros(168,168,10);
 imgs=uint8(imgs);
 m = zeros(168*168, 7);
@@ -39,9 +35,9 @@ end
 
 zx = reshape(z(1,:), 168, 168);
 zy = reshape(z(2,:), 168, 168);
-zx = inpaint_nans(zx);
-zy = inpaint_nans(zy);
-k = reshape(inpaint_nans(k), 1, []);
+zx = Inpaint(zx);
+zy = Inpaint(zy);
+k = reshape(Inpaint(k), 1, []);
 
 depth = normalToDepth(zx, zy);
 z = depth;
