@@ -1,6 +1,7 @@
 function [I, Im] = TSmodel(b, s, as, nu, G)
-%TSMODEL 此处显示有关此函数的摘要
-%   此处显示详细说明
+%TSMODEL Torrance-Sparrow Model, Im for mirror reflection intensity, I for
+%total intensity
+%   [I, Im] = TSmodel(b, s, as, nu, G)
     v = [0; 0; 1];
     Gb = G.' \ b;
     Gs = G * s;

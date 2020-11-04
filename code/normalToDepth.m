@@ -1,6 +1,7 @@
 function z = normalToDepth(zx, zy)
-%NORMALTODEPTH 此处显示有关此函数的摘要
-%   此处显示详细说明
+%NORMALTODEPTH Convert normal vectors into depth by Frankot-Chellappa
+%algorithm
+%   z = normalToDepth(zx, zy)
 
 [wx, wy] = meshgrid(linspace(-pi/2, pi/2, size(zx, 1)), linspace(pi/2, -pi/2, size(zx, 2)));
 

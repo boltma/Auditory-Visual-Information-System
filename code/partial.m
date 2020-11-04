@@ -1,6 +1,3 @@
-%depth = [1 3 5;7 11 13;17 19 23];
-%[dx, dy] = partial1(depth)
-
 function [dx, dy] = partial(depth)
     [m, n] = size(depth);
     diffx = diff(depth, 1, 2);
