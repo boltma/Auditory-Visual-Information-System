@@ -14,7 +14,7 @@ s = angleConversion(Source);
 t = angleConversion(Test);
 
 th_l = 5; % low threshold for shadows
-th_h = 255; % high threshold for saturated regions
+th_h = 254; % high threshold for saturated regions
 m_ori = m; % save original m before removing saturated or shadows
 m(m < th_l | m > th_h) = NaN;
 
