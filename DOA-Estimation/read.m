@@ -1,17 +1,15 @@
-%input is the numbering of data, output is an n*4 matrix
+%read all audio files
 function s = read()
-    audios = [];
+    audios = zeros(70000, 56);
     for i=1:14
-        audios = [audios read_group(1)];
+        len = size(read_group(i));
+        audios(1:len(1), i:i+3) = read_group(i);
     end
 end
 function s = read_group(num)
-    num = num+'0';
-    pth = ['train/' num];
-    [y1,Fs] = audioread([pth '_mic1.wav']);
-    [y2,Fs] = audioread([pth  '_mic2.wav']);
-    [y3,Fs] = audioread([pth  '_mic3.wav']);
-    [y4,Fs] = audioread([pth  '_mic4.wav']);
-
+    [y1,Fs] = audioread(['train/' num2str(num) '_mic1.wav']);
+    [y2,Fs] = audioread(['train/' num2str(num) '_mic2.wav']);
+    [y3,Fs] = audioread(['train/' num2str(num) '_mic3.wav']);
+    [y4,Fs] = audioread(['train/' num2str(num) '_mic4.wav']);
     s = [y1 y2 y3 y4];
 end
