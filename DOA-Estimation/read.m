@@ -1,5 +1,11 @@
 %input is the numbering of data, output is an n*4 matrix
-function s = read(num)
+function s = read()
+    audios = [];
+    for i=1:14
+        audios = [audios read_group(1)];
+    end
+end
+function s = read_group(num)
     num = num+'0';
     pth = ['train/' num];
     [y1,Fs] = audioread([pth '_mic1.wav']);
