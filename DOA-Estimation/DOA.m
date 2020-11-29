@@ -27,6 +27,8 @@ d = 0.2 / sqrt(2);
 % theta = mod(rad2deg(theta) - 45, 360)
 
 out = zeros(1, 14);
+out2 = zeros(1, 14);
+out3 = zeros(1, 14);
 
 for ii = 1:14
     disp(ii);
@@ -37,17 +39,42 @@ for ii = 1:14
         d/sqrt(2), 0, 0;...
         0, -d/sqrt(2), 0;...
         -d/sqrt(2), 0, 0;];
-        
-    [finalpos,finalsrp,finalfe] = srplems(s, mics, Fs, [-5 -5 -5], [5 5 5]);
     
-    [theta, ~] = cart2pol(finalpos(2), finalpos(1));
-    theta = rad2deg(theta);
-%     gcc = reshape(gccphat(s, Fs), 4, 4);
-%     
-% %     tau1 = (gcc(1, 2) + gcc(4, 3)) / 2; % horizontal
-% %     tau2 = (gcc(1, 4) + gcc(2, 3)) / 2; % vertical
-% %     theta1 = rad2deg(acos(-tau1 * c / d));
-% %     theta2 = rad2deg(acos(-tau2 * c / d));
+    %try
+        %[finalpos,finalsrp,finalfe] = srplems(s, mics, Fs, [-5 -5 -5], [5 5 5]);
+        [finalpos, minim] = SRP_PHAT_SRC(mics, Fs, s, 5000000, -4, 4);
+        [theta, ~] = cart2pol(finalpos(2), finalpos(1));
+        theta = rad2deg(theta);
+        out2(ii) = minim;
+        if minim > 3
+            gcc = reshape(gccphat(s, Fs), 4, 4);
+%         tau1 = (gcc(1, 2) + gcc(4, 3)) / 2; % horizontal
+%         tau2 = (gcc(1, 4) + gcc(2, 3)) / 2; % vertical
+%         theta1 = rad2deg(acos(-tau1 * c / d));
+%         theta2 = rad2deg(acos(-tau2 * c / d));
+            tau1 = gcc(2, 4);
+            tau2 = gcc(1, 3);
+            x = -tau1 * c / sqrt(2) / d;
+            y = -tau2 * c / sqrt(2) / d;
+            theta = rad2deg(cart2pol(y, x));
+        end
+        
+    %catch
+%         disp([num2str(ii), "failed"]);
+%         gcc = reshape(gccphat(s, Fs), 4, 4);
+% %         tau1 = (gcc(1, 2) + gcc(4, 3)) / 2; % horizontal
+% %         tau2 = (gcc(1, 4) + gcc(2, 3)) / 2; % vertical
+% %         theta1 = rad2deg(acos(-tau1 * c / d));
+% %         theta2 = rad2deg(acos(-tau2 * c / d));
+%         tau1 = gcc(2, 4);
+%         tau2 = gcc(1, 3);
+%         x = -tau1 * c / sqrt(2) / d;
+%         y = -tau2 * c / sqrt(2) / d;
+%         theta = rad2deg(cart2pol(y, x));
+%     %end
+    
+    
+
 %     
 %     %if ~isreal(theta1) || ~isreal(theta2)
 %         tau1 = gcc(2, 4);

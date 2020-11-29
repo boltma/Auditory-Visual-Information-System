@@ -1,4 +1,4 @@
-function [source]=SRP_PHAT_SRC(mics, fs, s, n, lsb, usb)
+function [source, minim]=SRP_PHAT_SRC(mics, fs, s, n, lsb, usb)
        % mics - microphones location         
        % fs - sampling rate
        % s - signal
@@ -23,6 +23,7 @@ function [source]=SRP_PHAT_SRC(mics, fs, s, n, lsb, usb)
 
 
 points=lsb + (usb - lsb).*rand(3,n);
+points(3, :) = 0;
 %%
 
 distances=zeros((nr_mic*(nr_mic-1)/2), n);
@@ -70,6 +71,5 @@ cc=abs(c);
 ccc=sum(cc);
 [minim, index]=min(ccc); 
 source=points(:,index);
-
 
 end
