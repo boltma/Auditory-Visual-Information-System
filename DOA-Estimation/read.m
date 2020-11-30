@@ -22,7 +22,7 @@ function [s, Fs] = read(name, num)
 %     y21 = bandpass(y2, [100 2000], Fs);
 %     y31 = bandpass(y3, [100 2000], Fs);
 %     y41 = bandpass(y4, [100 2000], Fs);
-    
+
     s = [y1 y2 y3 y4];
 %    Fs = 5 * Fs;
 end
