@@ -7,7 +7,7 @@ out = zeros(1, 140);
 out2 = zeros(1, 140);
 out3 = zeros(1, 140);
 
-for ii = 132
+for ii = 124
     disp(ii);
 
     [s, Fs] = read('test/', ii);
@@ -17,9 +17,9 @@ for ii = 132
         0, -d/sqrt(2);...
         -d/sqrt(2), 0;];
     
-    [finalpos, minim] = srpphat(mics, c, Fs, s, 2000000, -5, 5);
-    [theta, ~] = cart2pol(finalpos(2), finalpos(1));
-    theta = rad2deg(theta);
+%     [finalpos, minim] = srpphat(mics, c, Fs, s, 2000000, -5, 5);
+%     [theta, ~] = cart2pol(finalpos(2), finalpos(1));
+%     theta = rad2deg(theta);
     % out2(ii) = minim;
 
     gcc = reshape(gccphat(s, Fs), 4, 4);
@@ -34,23 +34,25 @@ for ii = 132
     flag2 = 0;
     flag3 = 0;
     flag4 = 0;
-    if abs(gcc(2, 3) - gcc(1, 4)) > 1 / Fs || abs(gcc(2, 3)) > c * d / Fs
-        if abs(gcc(2, 3)) < abs(gcc(1, 4))
+    if abs(gcc(2, 3) - gcc(1, 4)) > 1 / Fs || abs(gcc(2, 3)) > d / c + 1 / Fs || abs(gcc(1, 4)) > d / c + 1 / Fs
+        if abs(gcc(2, 3)) < abs(gcc(1, 4)) || abs(gcc(1, 4)) > d / c + 1 / Fs
             gcc(1, 4) = gcc(2, 3);
             gcc(4, 1) = gcc(3, 2);
             flag1 = 1;
-        else
+        end
+        if abs(gcc(2, 3)) > abs(gcc(1, 4)) || abs(gcc(2, 3)) > d / c + 1 / Fs
             gcc(2, 3) = gcc(1, 4);
             gcc(3, 2) = gcc(4, 1);
             flag2 = 1;
         end
     end
-    if abs(gcc(2, 1) - gcc(3, 4)) > 1 / Fs
-        if abs(gcc(2, 1)) < abs(gcc(3, 4))
+    if abs(gcc(2, 1) - gcc(3, 4)) > 1 / Fs || abs(gcc(1, 2)) > d / c + 1 / Fs || abs(gcc(3, 4)) > d / c + 1 / Fs
+        if abs(gcc(2, 1)) < abs(gcc(3, 4)) || abs(gcc(3, 4)) > d / c + 1 / Fs
             gcc(3, 4) = gcc(2, 1);
             gcc(4, 3) = gcc(1, 2);
             flag3 = 1;
-        else
+        end
+        if abs(gcc(2, 1)) > abs(gcc(3, 4)) || abs(gcc(1, 2)) > d / c + 1 / Fs
             gcc(2, 1) = gcc(3, 4);
             gcc(1, 2) = gcc(4, 3);
             flag4 = 1;
@@ -79,7 +81,7 @@ for ii = 132
     x = -tau1 * c / sqrt(2) / d;
     y = -tau2 * c / sqrt(2) / d;
     out3(ii) = mod(rad2deg(cart2pol(y, x)), 360);
-    % theta = out3(ii);
+    theta = out3(ii);
     
     theta = mod(theta, 360);
 
