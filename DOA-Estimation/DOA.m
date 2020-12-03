@@ -1,8 +1,8 @@
 clear all; close all; clc;
-
 c = 343.0;
 d = 0.2 / sqrt(2);
-
+MAX = 5;
+MIN = 0.3;
 out = zeros(1, 140);
 out2 = zeros(1, 140);
 out3 = zeros(1, 140);
@@ -20,10 +20,9 @@ for ii = 1:140
         0, -d/sqrt(2);...
         -d/sqrt(2), 0;];
     
-     [finalpos, minim] = srpphat(mics, c, Fs, s, 2000000, -5, 5);
-     [theta, ~] = cart2pol(finalpos(2), finalpos(1));
-     theta = rad2deg(theta);
-    % out2(ii) = minim;
+  [finalpos, minim] = srpphat(mics, c, Fs, s, 2000000, -5, 5);
+  [theta, ~] = cart2pol(finalpos(2), finalpos(1));
+  theta = rad2deg(theta);
     out(ii) = mod(theta, 360);
     gcc = reshape(gccphat(s, Fs), 4, 4);
     tau1 = gcc(2, 4);
@@ -97,5 +96,9 @@ for ii = 1:140
         out4(ii) = out2(ii);
     end
     
-
+    if (d2(ii) > MAX && d3(ii) > MAX) || (d2(ii) < MIN && d3(ii) < MIN)
+        out4(ii) = out(ii);
+    end
+    
 end
+save("test_result.mat", "out4");
