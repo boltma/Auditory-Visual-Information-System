@@ -1,4 +1,7 @@
 clear all; close all; clc;
+
+datapath = 'test/';
+tic;
 c = 343.0;
 d = 0.2 / sqrt(2);
 MAX = 5;
@@ -13,16 +16,16 @@ d3 = zeros(1, 140);
 for ii = 1:140
     disp(ii);
 
-    [s, Fs] = read('test/', ii);
+    [s, Fs] = read(datapath, ii);
     
     mics = [0, d / sqrt(2);...
         d/sqrt(2), 0;...
         0, -d/sqrt(2);...
         -d/sqrt(2), 0;];
     
-  [finalpos, minim] = srpphat(mics, c, Fs, s, 2000000, -5, 5);
-  [theta, ~] = cart2pol(finalpos(2), finalpos(1));
-  theta = rad2deg(theta);
+    [finalpos, minim] = srpphat(mics, c, Fs, s, 1000000, -5, 5);
+    [theta, ~] = cart2pol(finalpos(2), finalpos(1));
+    theta = rad2deg(theta);
     out(ii) = mod(theta, 360);
     gcc = reshape(gccphat(s, Fs), 4, 4);
     tau1 = gcc(2, 4);
@@ -101,4 +104,6 @@ for ii = 1:140
     end
     
 end
-save("test_result.mat", "out4");
+toc;
+out4 = out4';
+save([datapath 'result.txt'], 'out4', '-ascii');
