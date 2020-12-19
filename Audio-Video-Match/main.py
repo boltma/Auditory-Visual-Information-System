@@ -15,7 +15,7 @@ transform_train = transforms.Compose([
         transforms.ToTensor(),
         #transforms.Normalize((0.5, 0.5, 0.5, 0.5), (0.5, 0.5, 0.5, 0.5)),
     ])
-def train(trainloader, testloader, model, criterion, optimizer, epoch , use_cuda, size = None):
+def train(trainloader, testloader, model, criterion, optimizer, epoch, use_cuda, size = None):
     # switch to train mode
     model = nn.DataParallel(model).cuda()
     model.train()
@@ -115,13 +115,14 @@ optimizer = torch.optim.SGD(resnet.parameters(), lr=lr, momentum=0.9, weight_dec
 ds = my_dataset("train", transform_train)
 
 train_ds, val_ds = torch.utils.data.random_split(ds, [2000, 249])
-train_loader = torch.utils.data.DataLoader(train_ds, 64, False, num_workers = 20)
-val_loader = torch.utils.data.DataLoader(val_ds, 64, False, num_workers = 20)
+train_loader = torch.utils.data.DataLoader(train_ds, 16, False, num_workers = 20)
+val_loader = torch.utils.data.DataLoader(val_ds, 16, False, num_workers = 20)
 
-print(len(train_ds))
-ds.__getitem__(4)
 
-dataset2 = matching_dataset("train")
-dataset2.__getitem__(5)
 
-#train(train_loader, val_loader, resnet, criterion, optimizer, 200, use_cuda=True)
+# print(len(task2_ds))
+
+#dataset2 = matching_dataset(mode="train")
+#x = dataset2.__getitem__(5, 6)
+#print(x['raw'][1].shape)
+train(train_loader, val_loader, resnet, criterion, optimizer, 200, use_cuda=True)

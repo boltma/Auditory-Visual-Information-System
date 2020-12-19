@@ -78,6 +78,7 @@ class ResNet(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
+        x = x.float()
         out = F.relu(self.bn0(self.conv0(x)))
         out = F.relu(self.bn1(self.conv1(x)))
         out = self.layer1(out)
@@ -86,6 +87,42 @@ class ResNet(nn.Module):
         out = F.avg_pool2d(out, out.size()[3])
         out = out.view(out.size(0), -1)
         out = self.linear(out)
+        return out
+
+class CNN3D(nn.Module):
+    def __init__(self, num_classes=10):
+        super(CNN3D, self).__init__()
+        
+        self.conv_layer1 = self._conv_layer_set(1, 32)
+        self.conv_layer2 = self._conv_layer_set(32, 64)
+        self.fc1 = nn.Linear(4478976, 128)
+        self.fc2 = nn.Linear(128, num_classes)
+        self.relu = nn.LeakyReLU()
+        self.batch=nn.BatchNorm1d(128)
+        self.drop=nn.Dropout(p=0.15)        
+        
+    def _conv_layer_set(self, in_c, out_c):
+        conv_layer = nn.Sequential(
+            nn.Conv3d(in_c, out_c, kernel_size=(3, 3, 3), padding=0),
+            nn.LeakyReLU(),
+            nn.MaxPool3d((2, 2, 2)),
+        )
+        return conv_layer
+    
+    def forward(self, x):
+        print(x.shape)
+        x = x.float()
+        #x = x.permute(0,3,1,2)
+        out = self.conv_layer1(x)
+        out = self.conv_layer2(out)
+        out = out.view(out.size(0), -1)
+
+        out = self.fc1(out)
+        out = self.relu(out)
+        out = self.batch(out)
+        out = self.drop(out)
+        out = self.fc2(out)
+        
         return out
 
 class MLP(nn.Module):
