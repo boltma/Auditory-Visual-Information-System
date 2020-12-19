@@ -98,7 +98,10 @@ class matching_dataset(torch.utils.data.Dataset):
             imgpath = os.path.join("dataset/train/", self.imgs[idx1])
             img_pth = imgpath + "/audio_data.pkl"
 
-            img = np.load(imgpath + "/spec.npy")
+            sig = pickle.load(open(img_pth, 'rb'))["audio"]
+            img = spectrogram(sig)
+            np.save(imgpath + "/spec.npy", img)
+            # img = np.load(imgpath + "/spec.npy")
             img = Image.fromarray(img)
 
             #img = img.swapaxes(0, 2)
@@ -107,21 +110,21 @@ class matching_dataset(torch.utils.data.Dataset):
             video = np.array([])
             for a in os.listdir(video_pth):
                 image = Image.open(os.path.join(video_pth, a))
-                
+                image = image.resize((60, 60))
                 image = np.array(image)
                 if video.shape == (0,):
                     video = image
                 else:
                     video = np.dstack((video, image))
             i = 0
-            while video.shape[2] < 30:
+            while video.shape[2] < 32:
                 video = np.dstack((video, video[:,:,i]))
                 i = i + 1
-            video = np.reshape(video, (1, 30, 440, 440))
+            video = np.reshape(video, (1, 32, 60, 60))
             #print(video.shape)
         if self.transforms is not None:
             img = self.transforms(img)
-        label = (idx1 == idx2)
+        label = np.float32(idx1 == idx2)
         sample = {'raw': (img, video), 'label': label} 
         return sample
 

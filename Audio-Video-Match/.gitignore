@@ -142,3 +142,4 @@ __MACOSX/
 *.zip
 *.rar
 .vscode/
+.idea/
