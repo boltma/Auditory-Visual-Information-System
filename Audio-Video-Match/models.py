@@ -93,9 +93,10 @@ class CNN3D(nn.Module):
     def __init__(self, num_classes=10):
         super(CNN3D, self).__init__()
         
-        self.conv_layer1 = self._conv_layer_set(1, 32)
-        self.conv_layer2 = self._conv_layer_set(32, 64)
-        self.fc1 = nn.Linear(64896, 128)
+        self.conv_layer1 = self._conv_layer_set(1, 16)
+        self.conv_layer2 = self._conv_layer_set(16, 32)
+        self.conv_layer3 = self._conv_layer_set(32, 64)
+        self.fc1 = nn.Linear(3200, 128)
         self.fc2 = nn.Linear(128, num_classes)
         self.relu = nn.LeakyReLU()
         self.batch=nn.BatchNorm1d(128)
@@ -114,12 +115,15 @@ class CNN3D(nn.Module):
         #x = x.permute(0,3,1,2)
         out = self.conv_layer1(x)
         out = self.conv_layer2(out)
-        out = out.view(out.size(0), -1)
+        #print(out.shape)
+        out = self.conv_layer3(out)
 
+        
+        out = out.view(out.size(0), -1)
+        #print(out.shape)
         out = self.fc1(out)
         out = self.relu(out)
         out = self.batch(out)
-        out = self.drop(out)
         out = self.fc2(out)
         
         return out

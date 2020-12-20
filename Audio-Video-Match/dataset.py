@@ -6,6 +6,7 @@ import torch.nn as nn
 import numpy as np
 import wave
 import pickle
+import random
 from spectrogram import spectrogram
 labels = {
     '061_foam_brick':0,
@@ -93,8 +94,22 @@ class matching_dataset(torch.utils.data.Dataset):
         #print(a)
     def __getitem__(self, idx):
         if self.mode == "train":
-            idx1 = idx // self.imglen 
-            idx2 = idx % self.imglen
+            # idx1 = idx // 2
+            # idx2 = idx1
+            # if idx % 2:
+            #     idx2 = idx2 - 1
+            #     if idx2 < 0:
+            #         idx2 = idx2 + 2
+            idx1 = idx // 10
+            if idx % 10 == 0:
+                idx2 = idx1
+            else:
+                idx2 =  random.randint(idx1 + 1, self.imglen - 1) if idx1 < self.imglen / 2 else random.randint(0, idx1 - 1) 
+
+            
+            #print(idx2)
+            # idx1 = idx // self.imglen 
+            # idx2 = idx % self.imglen
             imgpath = os.path.join("dataset/train/", self.imgs[idx1])
             img_pth = imgpath + "/audio_data.pkl"
 
@@ -131,4 +146,4 @@ class matching_dataset(torch.utils.data.Dataset):
 
 
     def __len__(self):
-        return len(self.imgs) * len(self.imgs)
+        return self.imglen * 10

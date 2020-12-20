@@ -6,7 +6,7 @@ import torch.nn as nn
 import models
 from utils import Bar, Logger, AverageMeter, accuracy, mkdir_p, savefig
 import time
-lr = 0.02
+lr = 0.01
 device = torch.device("cuda")
 transform_train = transforms.Compose([
         # transforms.RandomCrop(32, padding=4),
@@ -14,7 +14,7 @@ transform_train = transforms.Compose([
         transforms.ToTensor(),
         #transforms.Normalize((0.5, 0.5, 0.5, 0.5), (0.5, 0.5, 0.5, 0.5)),
     ])
-def train(trainloader, img_model, video_model, criterion, optimizer, epoch, use_cuda, testloader = None, size = None):
+def train(trainloader, testloader, img_model, video_model, criterion, optimizer, epoch, use_cuda, size = None, save = False):
     # switch to train mode
     img_model = nn.DataParallel(img_model).cuda()
     video_model = nn.DataParallel(video_model).cuda()
@@ -26,8 +26,11 @@ def train(trainloader, img_model, video_model, criterion, optimizer, epoch, use_
     best_acc = 0.0
     for i in range(epoch):
         loss = 0.0
+        j = 0
         print("%d | %d: "%(i, epoch))
         for data in trainloader:
+            #print(j)
+            j = j + 1
             img_model.train(True)
             video_model.train(True)
             raw, label = data['raw'], data['label']
@@ -41,8 +44,12 @@ def train(trainloader, img_model, video_model, criterion, optimizer, epoch, use_
             optimizer.zero_grad()
             video_output = video_model(video)
             image_output = img_model(image)
-            dist = torch.sqrt(torch.sum((image_output - video_output) ** 2, dim=1)) / 10
-            output = nn.BCELoss()(dist, label)
+            dist = torch.sqrt(torch.sum((image_output - video_output) ** 2, dim=1))
+            #dist = torch.max(dist) - dist
+            if j == 1:
+                print(dist)
+                print(label)
+            output = nn.BCEWithLogitsLoss()(dist, label)
             output.backward()
             optimizer.step()
             loss += output.item()
@@ -52,33 +59,50 @@ def train(trainloader, img_model, video_model, criterion, optimizer, epoch, use_
         #if test_acc > best_acc:
         #    best_acc = test_acc
         #print('the accuracy is %.03f, the best accuracy is %.03f'%(test_acc, best_acc))
-        #test(model, testloader)
+        acc = test(video_model, img_model, testloader, use_cuda)
+        if save == True and best_acc < acc:
+            torch.save(video_model.state_dict(), "task2_cnn.pkl")
+            torch.save(img_model.state_dict(), "task2_resnet.pkl")
+        best_acc = max(best_acc, acc)
+        print("accuracy : %.03f, best : %.03f"%(acc, best_acc))
         
-def test(model, loader):
-    model.eval()
+def test(video_model, img_model, loader, use_cuda):
+    video_model.eval()
+    img_model.eval()
     correct = 0
     total = 0
     for data in loader:
-        image, label = data['image'], data['label']
-        image, label = image.cuda(), label.cuda()
-        image, label = torch.autograd.Variable(image), torch.autograd.Variable(label)
-        output = model(image)
-        pred = torch.argmax(output, 1)
+        raw, label = data['raw'], data['label']
+        image = raw[0]
+        video = raw[1]
+        if use_cuda:
+            image = torch.autograd.Variable(image.cuda())
+            video = torch.autograd.Variable(video.cuda()) 
+            label = torch.autograd.Variable(label.cuda())
+        video_output = video_model(video)
+        image_output = img_model(image)
+        dist = torch.sqrt(torch.sum((image_output - video_output) ** 2, dim=1))
+        #print(dist)
+        pred = (dist < 0.4)
         correct += (pred == label).sum().float()
         total += len(label)
     acc = (100 * correct * 1.0 / total) 
-    print("accuracy : %.03f"%(acc))
+    
     return acc
 
 
 resnet = models.ResNet(block=models.BasicBlock, num_blocks=[3,3,3])
 cnn = models.CNN3D()
 criterion = nn.MSELoss().cuda()
-#optimizer = torch.optim.Adam(resnet.parameters(), lr = lr)
+#optimizer = torch.optim.Adam(list(resnet.parameters()) + list(cnn.parameters()), lr = lr)
 optimizer = torch.optim.SGD(list(resnet.parameters()) + list(cnn.parameters()), lr=lr, momentum=0.9, weight_decay=1e-4)
 
-task2_ds = matching_dataset(cat='yellow_block', transforms = transform_train)
-task2_loader = torch.utils.data.DataLoader(task2_ds, 16, False, num_workers = 0)
+task2_ds = matching_dataset(cat='yellow_block', transforms=transform_train)
+val_len = len(task2_ds) // 10
+train_len = len(task2_ds) - val_len
+train_ds, val_ds = torch.utils.data.random_split(task2_ds, [train_len, val_len])
+train_loader = torch.utils.data.DataLoader(train_ds, 32, False, num_workers = 20)
+val_loader = torch.utils.data.DataLoader(val_ds, 32, False, num_workers = 20)
 
 
 # print(len(task2_ds))
@@ -87,4 +111,4 @@ task2_loader = torch.utils.data.DataLoader(task2_ds, 16, False, num_workers = 0)
 #x = dataset2.__getitem__(5, 6)
 #print(x['raw'][1].shape)
 
-train(task2_loader, video_model = cnn, img_model = resnet, criterion= criterion, optimizer= optimizer, epoch= 200, use_cuda=True)
+train(train_loader, val_loader, video_model = cnn, img_model = resnet, criterion= criterion, optimizer= optimizer, epoch= 200, use_cuda=True, save = True)
