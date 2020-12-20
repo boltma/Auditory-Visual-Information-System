@@ -3,10 +3,12 @@ import torch
 import torchvision as tv
 import torchvision.transforms as transforms
 import torch.nn as nn
+import torch.nn.functional as F
 import models
+from contrastive_loss import ContrastiveLoss
 from utils import Bar, Logger, AverageMeter, accuracy, mkdir_p, savefig
 import time
-lr = 0.01
+lr = 0.1
 device = torch.device("cuda")
 transform_train = transforms.Compose([
         # transforms.RandomCrop(32, padding=4),
@@ -14,6 +16,7 @@ transform_train = transforms.Compose([
         transforms.ToTensor(),
         #transforms.Normalize((0.5, 0.5, 0.5, 0.5), (0.5, 0.5, 0.5, 0.5)),
     ])
+
 def train(trainloader, testloader, img_model, video_model, criterion, optimizer, epoch, use_cuda, size = None, save = False):
     # switch to train mode
     img_model = nn.DataParallel(img_model).cuda()
@@ -25,8 +28,12 @@ def train(trainloader, testloader, img_model, video_model, criterion, optimizer,
         video_model = video_model.to(device)
     best_acc = 0.0
     for i in range(epoch):
+        for param_group in optimizer.param_groups:
+            if i in [200, 400]:
+                param_group['lr'] *= 0.1
         loss = 0.0
         j = 0
+        
         print("%d | %d: "%(i, epoch))
         for data in trainloader:
             #print(j)
@@ -44,12 +51,11 @@ def train(trainloader, testloader, img_model, video_model, criterion, optimizer,
             optimizer.zero_grad()
             video_output = video_model(video)
             image_output = img_model(image)
-            dist = torch.sqrt(torch.sum((image_output - video_output) ** 2, dim=1))
             #dist = torch.max(dist) - dist
-            if j == 1:
-                print(dist)
-                print(label)
-            output = nn.BCEWithLogitsLoss()(dist, label)
+            # if j == 1:
+            #     print(dist)
+            #     print(label)
+            output = ContrastiveLoss()(video_output, image_output, label)
             output.backward()
             optimizer.step()
             loss += output.item()
@@ -81,9 +87,10 @@ def test(video_model, img_model, loader, use_cuda):
             label = torch.autograd.Variable(label.cuda())
         video_output = video_model(video)
         image_output = img_model(image)
-        dist = torch.sqrt(torch.sum((image_output - video_output) ** 2, dim=1))
+        dist = F.pairwise_distance(video_output, image_output)
         #print(dist)
-        pred = (dist < 0.4)
+        pred = (dist < 0.5)
+        #print(label)
         correct += (pred == label).sum().float()
         total += len(label)
     acc = (100 * correct * 1.0 / total) 
@@ -94,8 +101,8 @@ def test(video_model, img_model, loader, use_cuda):
 resnet = models.ResNet(block=models.BasicBlock, num_blocks=[3,3,3])
 cnn = models.CNN3D()
 criterion = nn.MSELoss().cuda()
-#optimizer = torch.optim.Adam(list(resnet.parameters()) + list(cnn.parameters()), lr = lr)
-optimizer = torch.optim.SGD(list(resnet.parameters()) + list(cnn.parameters()), lr=lr, momentum=0.9, weight_decay=1e-4)
+optimizer = torch.optim.Adam(list(resnet.parameters()) + list(cnn.parameters()), lr = lr)
+#optimizer = torch.optim.SGD(list(resnet.parameters()) + list(cnn.parameters()), lr=lr, momentum=0.9, weight_decay=1e-4)
 
 task2_ds = matching_dataset(cat='yellow_block', transforms=transform_train)
 val_len = len(task2_ds) // 10
@@ -111,4 +118,4 @@ val_loader = torch.utils.data.DataLoader(val_ds, 32, False, num_workers = 20)
 #x = dataset2.__getitem__(5, 6)
 #print(x['raw'][1].shape)
 
-train(train_loader, val_loader, video_model = cnn, img_model = resnet, criterion= criterion, optimizer= optimizer, epoch= 200, use_cuda=True, save = True)
+train(train_loader, val_loader, video_model = cnn, img_model = resnet, criterion= criterion, optimizer= optimizer, epoch= 500, use_cuda=True, save = True)

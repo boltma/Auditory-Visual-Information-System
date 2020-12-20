@@ -100,8 +100,8 @@ class matching_dataset(torch.utils.data.Dataset):
             #     idx2 = idx2 - 1
             #     if idx2 < 0:
             #         idx2 = idx2 + 2
-            idx1 = idx // 10
-            if idx % 10 == 0:
+            idx1 = idx // 2
+            if idx % 2 == 0:
                 idx2 = idx1
             else:
                 idx2 =  random.randint(idx1 + 1, self.imglen - 1) if idx1 < self.imglen / 2 else random.randint(0, idx1 - 1) 
@@ -146,4 +146,4 @@ class matching_dataset(torch.utils.data.Dataset):
 
 
     def __len__(self):
-        return self.imglen * 10
+        return self.imglen * 2
