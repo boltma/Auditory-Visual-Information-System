@@ -51,10 +51,11 @@ def train(trainloader, testloader, img_model, video_model, criterion, optimizer,
             optimizer.zero_grad()
             video_output = video_model(video)
             image_output = img_model(image)
+
             #dist = torch.max(dist) - dist
             # if j == 1:
-            #     print(dist)
-            #     print(label)
+            #     print(video_output)
+            #     print(image_output)
             output = ContrastiveLoss()(video_output, image_output, label)
             output.backward()
             optimizer.step()
@@ -88,9 +89,9 @@ def test(video_model, img_model, loader, use_cuda):
         video_output = video_model(video)
         image_output = img_model(image)
         dist = F.pairwise_distance(video_output, image_output)
-        #print(dist)
-        pred = (dist < 0.5)
-        #print(label)
+        print(dist)
+        pred = (dist < 10.0)
+        print(label)
         correct += (pred == label).sum().float()
         total += len(label)
     acc = (100 * correct * 1.0 / total) 
@@ -99,16 +100,18 @@ def test(video_model, img_model, loader, use_cuda):
 
 
 resnet = models.ResNet(block=models.BasicBlock, num_blocks=[3,3,3])
-cnn = models.CNN3D()
+cnn3d = models.CNN3D()
+cnn = models.CNN()
+mlp = models.MLP()
 criterion = nn.MSELoss().cuda()
-optimizer = torch.optim.Adam(list(resnet.parameters()) + list(cnn.parameters()), lr = lr)
-#optimizer = torch.optim.SGD(list(resnet.parameters()) + list(cnn.parameters()), lr=lr, momentum=0.9, weight_decay=1e-4)
+optimizer = torch.optim.Adam(list(mlp.parameters()) + list(resnet.parameters()), lr = lr)
+#optimizer = torch.optim.SGD(list(cnn3d.parameters()) + list(resnet.parameters()), lr=lr, momentum=0.9, weight_decay=1e-4)
 
-task2_ds = matching_dataset(cat='yellow_block', transforms=transform_train)
+task2_ds = matching_dataset(cat = None, transforms=transform_train)
 val_len = len(task2_ds) // 10
 train_len = len(task2_ds) - val_len
 train_ds, val_ds = torch.utils.data.random_split(task2_ds, [train_len, val_len])
-train_loader = torch.utils.data.DataLoader(train_ds, 32, False, num_workers = 20)
+train_loader = torch.utils.data.DataLoader(train_ds, 64, False, num_workers = 20)
 val_loader = torch.utils.data.DataLoader(val_ds, 32, False, num_workers = 20)
 
 
@@ -117,5 +120,5 @@ val_loader = torch.utils.data.DataLoader(val_ds, 32, False, num_workers = 20)
 #dataset2 = matching_dataset(mode="train")
 #x = dataset2.__getitem__(5, 6)
 #print(x['raw'][1].shape)
-
-train(train_loader, val_loader, video_model = cnn, img_model = resnet, criterion= criterion, optimizer= optimizer, epoch= 500, use_cuda=True, save = True)
+#task2_ds.__getitem__(0)
+train(train_loader, val_loader, video_model=mlp, img_model=resnet, criterion=criterion, optimizer=optimizer, epoch=500, use_cuda=True, save = True)

@@ -88,6 +88,64 @@ class ResNet(nn.Module):
         out = out.view(out.size(0), -1)
         out = self.linear(out)
         return out
+'''
+class CNN(nn.Module):
+    def __init__(self, num_classes = 10):
+        super(CNN, self).__init__()
+        self.conv1 = nn.Conv2d(4,4, kernel_size=1, stride=(3, 1), padding=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(4)
+        self.conv2 = nn.Conv2d(4,16, kernel_size=3, stride=1, padding=1, bias=False)
+        self.bn2 = nn.BatchNorm2d(16)
+        self.conv3 = nn.Conv2d(16,32, kernel_size=3, stride=1, padding=1, bias=False)
+        self.bn3 = nn.BatchNorm2d(32)
+        self.fc1 = nn.Linear(32, 128)
+
+    def forward(self, x):
+        out = F.relu(self.bn1(self.conv1(x)))
+        print(out.shape)
+        out = F.relu(self.bn2(self.conv2(x)))
+        out = F.relu(self.bn3(self.conv3(x)))
+        out = F.avg_pool2d(out, out.size()[3])
+        out = out.view(out.size(0), -1)
+        #print(out.shape)
+        out = self.fc1(out) 
+'''
+class CNN(nn.Module):
+    def __init__(self, num_classes: int = 1000) -> None:
+        super(CNN, self).__init__()
+        self.features = nn.Sequential(
+            nn.Conv2d(4, 16, kernel_size=11, stride=4, padding=2),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            nn.Conv2d(16, 32, kernel_size=5, padding=2),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            nn.Conv2d(32, 64, kernel_size=3, padding=1),
+            # nn.ReLU(inplace=True),
+            # nn.Conv2d(384, 256, kernel_size=3, padding=1),
+            # nn.ReLU(inplace=True),
+            # nn.Conv2d(256, 256, kernel_size=3, padding=1),
+            # nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+        )
+        self.avgpool = nn.AdaptiveAvgPool2d((6, 6))
+        self.classifier = nn.Sequential(
+            # #nn.Dropout(),
+            # nn.Linear(256 * 6 * 6, 4096),
+            # nn.ReLU(inplace=True),
+            # #nn.Dropout(),
+            # nn.Linear(4096, 4096),
+            # nn.ReLU(inplace=True),
+            nn.Linear(2304, 128),
+        )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.features(x)
+        x = self.avgpool(x)
+        x = torch.flatten(x, 1)
+        #print(x.shape)
+        x = self.classifier(x)
+        return x
 
 class CNN3D(nn.Module):
     def __init__(self, num_classes=10):
@@ -115,16 +173,12 @@ class CNN3D(nn.Module):
         #x = x.permute(0,3,1,2)
         out = self.conv_layer1(x)
         out = self.conv_layer2(out)
-        #print(out.shape)
         out = self.conv_layer3(out)
-
-        
         out = out.view(out.size(0), -1)
-        #print(out.shape)
         out = self.fc1(out)
-        out = self.relu(out)
-        out = self.batch(out)
-        out = self.fc2(out)
+        # out = self.relu(out)
+        # out = self.batch(out)
+        # out = self.fc2(out)
         
         return out
 
@@ -134,13 +188,13 @@ class MLP(nn.Module):
 
         self.feature = nn.Sequential(
             
-            nn.Linear(4, 15),
+            nn.Linear(70, 15),
             nn.ELU(),
             nn.BatchNorm1d(15),
             nn.Linear(15, 10),
             nn.ELU(),
             nn.BatchNorm1d(10),
-            nn.Linear(10, 1) 
+            nn.Linear(10, 10) 
             
         )
     def forward(self, x):
