@@ -68,8 +68,8 @@ def train(trainloader, testloader, img_model, video_model, criterion, optimizer,
         #print('the accuracy is %.03f, the best accuracy is %.03f'%(test_acc, best_acc))
         acc = test(video_model, img_model, testloader, use_cuda)
         if save == True and best_acc < acc:
-            torch.save(video_model.state_dict(), "task2_cnn.pkl")
-            torch.save(img_model.state_dict(), "task2_resnet.pkl")
+            torch.save(video_model.state_dict(), "green_basketball_3dcnn.pkl")
+            torch.save(img_model.state_dict(), "green_basketball_3dresnet.pkl")
         best_acc = max(best_acc, acc)
         print("accuracy : %.03f, best : %.03f"%(acc, best_acc))
         
@@ -104,15 +104,15 @@ cnn3d = models.CNN3D()
 cnn = models.CNN()
 mlp = models.MLP()
 criterion = nn.MSELoss().cuda()
-optimizer = torch.optim.Adam(list(mlp.parameters()) + list(resnet.parameters()), lr = lr)
+optimizer = torch.optim.Adam(list(cnn3d.parameters()) + list(resnet.parameters()), lr = lr)
 #optimizer = torch.optim.SGD(list(cnn3d.parameters()) + list(resnet.parameters()), lr=lr, momentum=0.9, weight_decay=1e-4)
 
-task2_ds = matching_dataset(cat = None, transforms=transform_train)
+task2_ds = matching_dataset(cat = "green_basketball", transforms=transform_train)
 val_len = len(task2_ds) // 10
 train_len = len(task2_ds) - val_len
 train_ds, val_ds = torch.utils.data.random_split(task2_ds, [train_len, val_len])
-train_loader = torch.utils.data.DataLoader(train_ds, 64, False, num_workers = 20)
-val_loader = torch.utils.data.DataLoader(val_ds, 32, False, num_workers = 20)
+train_loader = torch.utils.data.DataLoader(train_ds, 64, False, num_workers = 10)
+val_loader = torch.utils.data.DataLoader(val_ds, 32, False, num_workers = 10)
 
 
 # print(len(task2_ds))
@@ -121,4 +121,4 @@ val_loader = torch.utils.data.DataLoader(val_ds, 32, False, num_workers = 20)
 #x = dataset2.__getitem__(5, 6)
 #print(x['raw'][1].shape)
 #task2_ds.__getitem__(0)
-train(train_loader, val_loader, video_model=mlp, img_model=resnet, criterion=criterion, optimizer=optimizer, epoch=500, use_cuda=True, save = True)
+train(train_loader, val_loader, video_model=cnn3d, img_model=resnet, criterion=criterion, optimizer=optimizer, epoch=500, use_cuda=True, save = True)

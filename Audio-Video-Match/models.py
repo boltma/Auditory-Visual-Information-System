@@ -176,9 +176,9 @@ class CNN3D(nn.Module):
         out = self.conv_layer3(out)
         out = out.view(out.size(0), -1)
         out = self.fc1(out)
-        # out = self.relu(out)
-        # out = self.batch(out)
-        # out = self.fc2(out)
+        out = self.relu(out)
+        out = self.batch(out)
+        out = self.fc2(out)
         
         return out
 

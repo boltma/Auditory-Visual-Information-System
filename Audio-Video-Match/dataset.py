@@ -134,33 +134,40 @@ class matching_dataset(torch.utils.data.Dataset):
             pth_list = os.listdir(video_pth)
             pth_list.sort()
             video = np.array([])
-            # for a in os.listdir(video_pth):
-            #     image = Image.open(os.path.join(video_pth, a))
-            #     # image = image.resize((60, 60))
-            #     image = np.array(image)
-            #     if video.shape == (0,):
-            #         video = image
-            #     else:
-            #         video = np.dstack((video, image))
-            # i = 0
-            # while video.shape[2] < 35:
-            #     video = np.dstack((video, video[:,:,i]))
-            #     i = i + 1
-            #print(pth_list)
-            cen = np.array([])
             for a in pth_list:
-                
                 filename, file_extension = os.path.splitext(os.path.join(video_pth, a))
                 if file_extension != '.png':
                     continue
                 image = Image.open(os.path.join(video_pth, a))
+                image = image.resize((60, 60))
                 image = np.array(image)
-                x_center, y_center = centroid(image)
-                cen = np.append(cen, np.array([x_center, y_center]))
-            if len(cen) < 70:
-                cen = np.append(cen, cen[0:70-len(cen)])
-            cen = np.float32(cen)
-            np.save(video_pth + "/centroid.npy", cen)
+                if video.shape == (0,):
+                    video = image
+                else:
+                    video = np.dstack((video, image))
+            i = 0
+            while video.shape[2] < 35:
+                video = np.dstack((video, video[:,:,i]))
+                i = i + 1
+            
+            video = np.swapaxes(video, 0, 2)
+            
+            video = np.reshape(video, (1, 35, 60, 60))
+
+            # cen = np.array([])
+            # for a in pth_list:
+                
+            #     filename, file_extension = os.path.splitext(os.path.join(video_pth, a))
+            #     if file_extension != '.png':
+            #         continue
+            #     image = Image.open(os.path.join(video_pth, a))
+            #     image = np.array(image)
+            #     x_center, y_center = centroid(image)
+            #     cen = np.append(cen, np.array([x_center, y_center]))
+            # if len(cen) < 70:
+            #     cen = np.append(cen, cen[0:70-len(cen)])
+            # cen = np.float32(cen)
+            # np.save(video_pth + "/centroid.npy", cen)
 
             #cen = np.load(video_pth + "/centroid.npy")
             #print(len(cen))
@@ -174,7 +181,7 @@ class matching_dataset(torch.utils.data.Dataset):
         if self.transforms is not None:
             img = self.transforms(img)
         label = np.float32(idx1 == idx2)
-        sample = {'raw': (img, cen), 'label': label} 
+        sample = {'raw': (img, video), 'label': label} 
         return sample
 
 
