@@ -183,6 +183,8 @@ class matching_dataset(torch.utils.data.Dataset):
                 cen = np.append(cen, np.array([x_center, y_center]))
             if len(cen) < 70:
                 cen = np.append(cen, cen[0:70-len(cen)])
+            elif len(cen) > 70:
+                cen = cen[0:70]
             cen = np.float32(cen)
             np.save(video_pth + "/centroid.npy", cen)
 
@@ -220,6 +222,8 @@ class matching_dataset(torch.utils.data.Dataset):
                 cen = np.append(cen, np.array([x_center, y_center]))
             if len(cen) < 70:
                 cen = np.append(cen, cen[0:70-len(cen)])
+            elif len(cen) > 70:
+                cen = cen[0:70]
             cen = np.float32(cen)
 
         if self.transforms is not None:

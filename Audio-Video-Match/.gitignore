@@ -145,3 +145,5 @@ __MACOSX/
 .idea/
 *.npy
 *.pkl
+*.tar
+*.pdf
