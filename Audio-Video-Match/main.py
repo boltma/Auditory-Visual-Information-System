@@ -6,7 +6,6 @@ import torchvision as tv
 import torchvision.transforms as transforms
 import torch.nn as nn
 import models
-from utils import Bar, Logger, AverageMeter, accuracy, mkdir_p, savefig
 import time
 import resnet
 
@@ -78,50 +77,6 @@ def test1(model, loader):
     print("accuracy : %.03f"%(acc))
     return acc
 
-
-def test(testloader, model, criterion, epoch, use_cuda, save_pth = None, save = False, best_acc = 0.0):
-    #global best_acc
-
-    batch_time = AverageMeter()
-    data_time = AverageMeter()
-    losses = AverageMeter()
-    top1 = AverageMeter()
-    top5 = AverageMeter()
-
-    # switch to evaluate mode
-    model.eval()
-
-    end = time.time()
-    #bar = Bar('Processing', max=len(testloader))
-    for data in testloader:
-        # measure data loading time
-        data_time.update(time.time() - end)
-        inputs, targets = data['image'], data['label'] 
-        if use_cuda:
-            inputs, targets = inputs.cuda(), targets.cuda()
-
-        inputs, targets = torch.autograd.Variable(inputs), torch.autograd.Variable(targets)
-
-        # compute output
-        outputs = model(inputs)
-        loss = criterion(outputs, targets)
-
-        # measure accuracy and record loss
-        #print(outputs.data.shape)
-        #print(targets.data.shape) 
-        prec1 = accuracy(outputs.data, targets.data)
-        losses.update(loss.data, inputs.size(0))
-        #print(prec1)
-        top1.update(prec1[0], inputs.size(0))
-
-        # measure elapsed time
-        batch_time.update(time.time() - end)
-        end = time.time()
-    if save:
-        if top1.avg > best_acc:
-           torch.save(model.state_dict(), save_pth) 
-
-    return (losses.avg, top1.avg)
 
 resnet = models.ResNet(block=models.BasicBlock, num_blocks=[3,3,3])
 resnet = nn.DataParallel(resnet).cuda()
