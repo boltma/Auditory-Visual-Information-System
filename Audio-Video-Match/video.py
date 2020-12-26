@@ -1,5 +1,6 @@
 from dataset import my_dataset
 from dataset import matching_dataset
+from dataset import video_dataset
 import numpy as np
 import torch
 import torchvision as tv
@@ -8,8 +9,6 @@ import torch.nn as nn
 import models
 from utils import Bar, Logger, AverageMeter, accuracy, mkdir_p, savefig
 import time
-import resnet
-
 lr = 0.02
 device = torch.device("cuda")
 transform_train = transforms.Compose([
@@ -56,11 +55,11 @@ def train(trainloader, testloader, model, criterion, optimizer, epoch, use_cuda,
         acc_list.append(acc)
 
         if save == True and best_acc < acc:
-            torch.save(model.state_dict(), "task1resnet18.pkl")
+            torch.save(model.state_dict(), "new_video_resnet.pkl")
         best_acc = max(best_acc, acc)
         print("accuracy : %.03f, best : %.03f"%(acc, best_acc))
-    #np.save("acc_50.npy", acc_list)
-    #np.save("loss_50.npy", loss_list)
+    np.save("video_acc.npy", acc_list)
+    np.save("video_loss.npy", loss_list)
 
 def test1(model, loader):
     model.eval()
@@ -123,19 +122,16 @@ def test(testloader, model, criterion, epoch, use_cuda, save_pth = None, save = 
 
     return (losses.avg, top1.avg)
 
-resnet = models.ResNet(block=models.BasicBlock, num_blocks=[3,3,3])
-resnet = nn.DataParallel(resnet).cuda()
-resnet.load_state_dict(torch.load("task1resnet18.pkl"))
-#resnet = resnet.resnet50()
+resnet = models.ResNet(in_ch=1, in_stride=(1,1), fc_size=64, block=models.BasicBlock, num_blocks=[3,3,3])
 mlp = models.MLP()
 criterion = nn.CrossEntropyLoss().cuda()
 #optimizer = torch.optim.Adam(resnet.parameters(), lr = lr)
 optimizer = torch.optim.SGD(resnet.parameters(), lr=lr, momentum=0.9, weight_decay=1e-4)
-ds = my_dataset("train", transform_train)
-
-train_ds, val_ds = torch.utils.data.random_split(ds, [2000, 249])
-train_loader = torch.utils.data.DataLoader(train_ds, 32, False, num_workers = 20)
-val_loader = torch.utils.data.DataLoader(val_ds, 16, False, num_workers = 20)
+ds = video_dataset("train", transform_train)
+# print(ds.__len__())
+train_ds, val_ds = torch.utils.data.random_split(ds, [50000, 6998])
+train_loader = torch.utils.data.DataLoader(train_ds, 128, False, num_workers = 20)
+val_loader = torch.utils.data.DataLoader(val_ds, 64, False, num_workers = 20)
 
 
 
@@ -144,6 +140,4 @@ val_loader = torch.utils.data.DataLoader(val_ds, 16, False, num_workers = 20)
 #dataset2 = matching_dataset(mode="train")
 #x = dataset2.__getitem__(5, 6)
 #print(x['raw'][1].shape)
-
-test1(resnet, val_loader)
-#train(train_loader, val_loader, resnet, criterion, optimizer, 500, use_cuda=True, save = False)
+train(train_loader, val_loader, resnet, criterion, optimizer, 200, use_cuda=True, save = True)

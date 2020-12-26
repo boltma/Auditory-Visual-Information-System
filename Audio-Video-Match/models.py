@@ -53,18 +53,18 @@ class BasicBlock(nn.Module):
 
 
 class ResNet(nn.Module):
-    def __init__(self, block, num_blocks, num_classes=10):
+    def __init__(self, block, num_blocks, in_ch=4, in_stride=(1, 1), fc_size=128, num_classes=10):
         super(ResNet, self).__init__()
         self.in_planes = 16
 
-        self.conv0 = nn.Conv2d(4, 4, kernel_size=1, stride=(3, 1), padding=1, bias=False)
+        self.conv0 = nn.Conv2d(in_ch, 4, kernel_size=1, stride=in_stride, padding=1, bias=False)
         self.bn0 = nn.BatchNorm2d(4)
         self.conv1 = nn.Conv2d(4, 16, kernel_size=3, stride=1, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(16)
         self.layer1 = self._make_layer(block, 16, num_blocks[0], stride=1)
         self.layer2 = self._make_layer(block, 32, num_blocks[1], stride=2)
         self.layer3 = self._make_layer(block, 64, num_blocks[2], stride=2)
-        self.linear = nn.Linear(128, num_classes)
+        self.linear = nn.Linear(fc_size, num_classes)
 
         #self.apply(_weights_init)
 
@@ -78,15 +78,24 @@ class ResNet(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
+        # print(x.shape)
         x = x.float()
         out = F.relu(self.bn0(self.conv0(x)))
-        out = F.relu(self.bn1(self.conv1(x)))
+        # print(out.shape)
+        out = F.relu(self.bn1(self.conv1(out)))
+        # print(out.shape)
         out = self.layer1(out)
+        # print(out.shape)
         out = self.layer2(out)
+        # print(out.shape)
         out = self.layer3(out)
+        #print(out.shape)
         out = F.avg_pool2d(out, out.size()[3])
+        # print(out.shape)
         out = out.view(out.size(0), -1)
+        # print(out.shape)
         out = self.linear(out)
+        # print(out.shape)
         return out
 '''
 class CNN(nn.Module):
