@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import pickle
 import numpy as np
+
+
 # import sounddevice as s
 
 # pth = "dataset/train/061_foam_brick/10/audio_data.pkl"
@@ -17,7 +19,7 @@ def spectrogram(sig, Fs=44100, NFFT=1024):
     Specs = np.array([])
     for i in range(4):
         if len(sig[:, i]) < 176400:
-            s = np.append(sig[:, i], sig[0:176400-len(sig[:, i]), i])
+            s = np.append(sig[:, i], sig[0:176400 - len(sig[:, i]), i])
         else:
             s = sig[0:176400, i]
         Spec, freq, time, Ax = plt.specgram(s, NFFT=NFFT, Fs=Fs)
@@ -31,6 +33,5 @@ def spectrogram(sig, Fs=44100, NFFT=1024):
         # plt.show()
     # Specs = Specs.swapaxes(0, 2)
     # print(Specs.shape)
-    #print(Specs)
+    # print(Specs)
     return np.uint8(Specs)
-    

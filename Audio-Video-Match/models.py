@@ -6,11 +6,13 @@ import torch.nn as nn
 import argparse
 import torch.nn.functional as F
 
+
 def _weights_init(m):
     classname = m.__class__.__name__
-    #print(classname)
+    # print(classname)
     if isinstance(m, nn.Linear) or isinstance(m, nn.Conv2d):
         init.kaiming_normal_(m.weight)
+
 
 class LambdaLayer(nn.Module):
     def __init__(self, lambd):
@@ -19,6 +21,7 @@ class LambdaLayer(nn.Module):
 
     def forward(self, x):
         return self.lambd(x)
+
 
 class BasicBlock(nn.Module):
     expansion = 1
@@ -37,11 +40,12 @@ class BasicBlock(nn.Module):
                 For CIFAR10 ResNet paper uses option A.
                 """
                 self.shortcut = LambdaLayer(lambda x:
-                                            F.pad(x[:, :, ::2, ::2], (0, 0, 0, 0, planes//4, planes//4), "constant", 0))
+                                            F.pad(x[:, :, ::2, ::2], (0, 0, 0, 0, planes // 4, planes // 4), "constant",
+                                                  0))
             elif option == 'B':
                 self.shortcut = nn.Sequential(
-                     nn.Conv2d(in_planes, self.expansion * planes, kernel_size=1, stride=stride, bias=False),
-                     nn.BatchNorm2d(self.expansion * planes)
+                    nn.Conv2d(in_planes, self.expansion * planes, kernel_size=1, stride=stride, bias=False),
+                    nn.BatchNorm2d(self.expansion * planes)
                 )
 
     def forward(self, x):
@@ -66,10 +70,10 @@ class ResNet(nn.Module):
         self.layer3 = self._make_layer(block, 64, num_blocks[2], stride=2)
         self.linear = nn.Linear(fc_size, num_classes)
 
-        #self.apply(_weights_init)
+        # self.apply(_weights_init)
 
     def _make_layer(self, block, planes, num_blocks, stride):
-        strides = [stride] + [1]*(num_blocks-1)
+        strides = [stride] + [1] * (num_blocks - 1)
         layers = []
         for stride in strides:
             layers.append(block(self.in_planes, planes, stride))
@@ -89,7 +93,7 @@ class ResNet(nn.Module):
         out = self.layer2(out)
         # print(out.shape)
         out = self.layer3(out)
-        #print(out.shape)
+        # print(out.shape)
         out = F.avg_pool2d(out, out.size()[3])
         # print(out.shape)
         out = out.view(out.size(0), -1)
@@ -97,6 +101,8 @@ class ResNet(nn.Module):
         out = self.linear(out)
         # print(out.shape)
         return out
+
+
 '''
 class CNN(nn.Module):
     def __init__(self, num_classes = 10):
@@ -119,6 +125,8 @@ class CNN(nn.Module):
         #print(out.shape)
         out = self.fc1(out) 
 '''
+
+
 class CNN(nn.Module):
     def __init__(self, num_classes: int = 1000) -> None:
         super(CNN, self).__init__()
@@ -152,23 +160,24 @@ class CNN(nn.Module):
         x = self.features(x)
         x = self.avgpool(x)
         x = torch.flatten(x, 1)
-        #print(x.shape)
+        # print(x.shape)
         x = self.classifier(x)
         return x
+
 
 class CNN3D(nn.Module):
     def __init__(self, num_classes=10):
         super(CNN3D, self).__init__()
-        
+
         self.conv_layer1 = self._conv_layer_set(1, 16)
         self.conv_layer2 = self._conv_layer_set(16, 32)
         self.conv_layer3 = self._conv_layer_set(32, 64)
         self.fc1 = nn.Linear(3200, 128)
         self.fc2 = nn.Linear(128, num_classes)
         self.relu = nn.LeakyReLU()
-        self.batch=nn.BatchNorm1d(128)
-        self.drop=nn.Dropout(p=0.15)        
-        
+        self.batch = nn.BatchNorm1d(128)
+        self.drop = nn.Dropout(p=0.15)
+
     def _conv_layer_set(self, in_c, out_c):
         conv_layer = nn.Sequential(
             nn.Conv3d(in_c, out_c, kernel_size=(3, 3, 3), padding=0),
@@ -176,10 +185,10 @@ class CNN3D(nn.Module):
             nn.MaxPool3d((2, 2, 2)),
         )
         return conv_layer
-    
+
     def forward(self, x):
         x = x.float()
-        #x = x.permute(0,3,1,2)
+        # x = x.permute(0,3,1,2)
         out = self.conv_layer1(x)
         out = self.conv_layer2(out)
         out = self.conv_layer3(out)
@@ -188,24 +197,26 @@ class CNN3D(nn.Module):
         out = self.relu(out)
         out = self.batch(out)
         out = self.fc2(out)
-        
+
         return out
+
 
 class MLP(nn.Module):
     def __init__(self):
         super(MLP, self).__init__()
 
         self.feature = nn.Sequential(
-            
+
             nn.Linear(70, 15),
             nn.ELU(),
             nn.BatchNorm1d(15),
             nn.Linear(15, 10),
             nn.ELU(),
             nn.BatchNorm1d(10),
-            nn.Linear(10, 10) 
-            
+            nn.Linear(10, 10)
+
         )
+
     def forward(self, x):
         x = self.feature(x)
         return x
