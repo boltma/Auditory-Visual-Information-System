@@ -6,7 +6,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 import models
 from contrastive_loss import ContrastiveLoss
-from utils import Bar, Logger, AverageMeter, accuracy, mkdir_p, savefig
 import time
 import numpy as np
 
